@@ -3,9 +3,11 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const fetch = require("node-fetch");
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+
 
 var app = express();
 
@@ -37,5 +39,25 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
+
+const array_weather_fetched = [];
+
+const fetchWeatherAPI = (array_weather_fetched) => {
+  fetch('https://danepubliczne.imgw.pl/api/data/synop/id/12600')
+    .then(res => res.json()).then(result => {
+      if(!app.locals.weather_history)
+        app.locals.weather_history = [];
+
+      let _date = `${result.data_pomiaru} ${result.godzina_pomiaru}:00`;
+      console.log(_date);
+      app.locals.weather_history.push({date: _date, temp: result.temperatura});
+      console.log(app.locals.weather_history);
+    });
+}
+
+fetchWeatherAPI(array_weather_fetched);
+setInterval(() => {
+  fetchWeatherAPI(array_weather_fetched);
+}, 1000 * 60 * 60);
 
 module.exports = app;
